@@ -39,7 +39,9 @@ class ThemeProvider extends ChangeNotifier {
       _isDarkMode = storedDarkMode ?? false;
       _isDailyReminderEnabled = storedReminder ?? false;
 
-      debugPrint('Theme preferences loaded - Dark: $_isDarkMode, Reminder: $_isDailyReminderEnabled');
+      debugPrint(
+        'Theme preferences loaded - Dark: $_isDarkMode, Reminder: $_isDailyReminderEnabled',
+      );
 
       _setLoading(false);
       notifyListeners();
@@ -105,7 +107,10 @@ class ThemeProvider extends ChangeNotifier {
   Future<bool> _saveReminderPreference() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final success = await prefs.setBool(_reminderKey, _isDailyReminderEnabled);
+      final success = await prefs.setBool(
+        _reminderKey,
+        _isDailyReminderEnabled,
+      );
       return success;
     } catch (e) {
       debugPrint('Gagal menyimpan preferensi pengingat: $e');

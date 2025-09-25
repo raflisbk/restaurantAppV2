@@ -26,10 +26,7 @@ void main() async {
   await NotificationHelper().initNotifications();
 
   // Initialize WorkManager for background tasks
-  await Workmanager().initialize(
-    callbackDispatcher,
-    isInDebugMode: false,
-  );
+  await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
 
   runApp(const RestaurantApp());
 }

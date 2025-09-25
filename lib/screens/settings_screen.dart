@@ -59,8 +59,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                     activeThumbColor: Theme.of(context).colorScheme.primary,
                     inactiveThumbColor: Theme.of(context).colorScheme.outline,
-                    inactiveTrackColor:
-                        Theme.of(context).colorScheme.outline.withAlpha(51),
+                    inactiveTrackColor: Theme.of(
+                      context,
+                    ).colorScheme.outline.withAlpha(51),
                   ),
                 ),
                 _buildDivider(),
@@ -83,8 +84,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         : null,
                     activeThumbColor: Theme.of(context).colorScheme.primary,
                     inactiveThumbColor: Theme.of(context).colorScheme.outline,
-                    inactiveTrackColor:
-                        Theme.of(context).colorScheme.outline.withAlpha(51),
+                    inactiveTrackColor: Theme.of(
+                      context,
+                    ).colorScheme.outline.withAlpha(51),
                   ),
                 ),
               ]),
@@ -341,7 +343,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           final permitted = await _notificationHelper.requestIOSPermissions();
           if (!permitted) {
             if (mounted) {
-              _showSnackbar(context, 'Izin notifikasi diperlukan untuk fitur ini');
+              _showSnackbar(
+                context,
+                'Izin notifikasi diperlukan untuk fitur ini',
+              );
             }
             return;
           }
@@ -405,7 +410,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         if (success) {
           _showSnackbar(context, 'Notifikasi test berhasil dikirim');
         } else {
-          _showSnackbar(context, 'Gagal mengirim notifikasi - periksa izin aplikasi');
+          _showSnackbar(
+            context,
+            'Gagal mengirim notifikasi - periksa izin aplikasi',
+          );
         }
       }
     } catch (e) {

@@ -97,12 +97,14 @@ class NotificationHelper {
     if (!Platform.isAndroid) return true;
 
     try {
-      final androidImplementation =
-          flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>();
+      final androidImplementation = flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
 
       if (androidImplementation != null) {
-        final bool? granted = await androidImplementation.requestNotificationsPermission();
+        final bool? granted = await androidImplementation
+            .requestNotificationsPermission();
         return granted ?? false;
       }
       return true;
@@ -114,7 +116,9 @@ class NotificationHelper {
 
   Future<bool> showNotification(String title, String body) async {
     if (!isPlatformSupported) {
-      debugPrint('Notifications are not supported on this platform (Windows/Web)');
+      debugPrint(
+        'Notifications are not supported on this platform (Windows/Web)',
+      );
       return false;
     }
 
@@ -177,9 +181,9 @@ class NotificationHelper {
 
       // Common timezone mappings for Indonesia
       final Map<String, String> indonesianTimeZones = {
-        '7:00:00.000000': 'Asia/Jakarta',    // WIB (Western Indonesia Time)
-        '8:00:00.000000': 'Asia/Makassar',   // WITA (Central Indonesia Time)
-        '9:00:00.000000': 'Asia/Jayapura',   // WIT (Eastern Indonesia Time)
+        '7:00:00.000000': 'Asia/Jakarta', // WIB (Western Indonesia Time)
+        '8:00:00.000000': 'Asia/Makassar', // WITA (Central Indonesia Time)
+        '9:00:00.000000': 'Asia/Jayapura', // WIT (Eastern Indonesia Time)
       };
 
       // Check if it's Indonesian timezone
@@ -190,18 +194,18 @@ class NotificationHelper {
       // For other countries, try common timezones based on offset
       final int offsetHours = now.timeZoneOffset.inHours;
       final Map<int, String> commonTimeZones = {
-        -8: 'America/Los_Angeles',  // PST/PDT
-        -7: 'America/Denver',       // MST/MDT
-        -6: 'America/Chicago',      // CST/CDT
-        -5: 'America/New_York',     // EST/EDT
-        0: 'Europe/London',         // GMT/BST
-        1: 'Europe/Paris',          // CET/CEST
-        2: 'Europe/Helsinki',       // EET/EEST
-        3: 'Europe/Moscow',         // MSK
-        5: 'Asia/Karachi',          // PKT
-        7: 'Asia/Jakarta',          // WIB
-        8: 'Asia/Singapore',        // SGT
-        9: 'Asia/Tokyo',            // JST
+        -8: 'America/Los_Angeles', // PST/PDT
+        -7: 'America/Denver', // MST/MDT
+        -6: 'America/Chicago', // CST/CDT
+        -5: 'America/New_York', // EST/EDT
+        0: 'Europe/London', // GMT/BST
+        1: 'Europe/Paris', // CET/CEST
+        2: 'Europe/Helsinki', // EET/EEST
+        3: 'Europe/Moscow', // MSK
+        5: 'Asia/Karachi', // PKT
+        7: 'Asia/Jakarta', // WIB
+        8: 'Asia/Singapore', // SGT
+        9: 'Asia/Tokyo', // JST
       };
 
       if (commonTimeZones.containsKey(offsetHours)) {
@@ -267,8 +271,8 @@ class NotificationHelper {
       now.month,
       now.day,
       11, // 11 AM in 24-hour format
-      0,  // 0 minutes
-      0,  // 0 seconds
+      0, // 0 minutes
+      0, // 0 seconds
     );
 
     // If the scheduled time has already passed today, schedule for tomorrow
@@ -300,7 +304,7 @@ class NotificationHelper {
       now.month,
       now.day,
       11, // 11 AM
-      0,  // 0 minutes
+      0, // 0 minutes
     );
 
     tz.TZDateTime nextTarget = targetTime;
@@ -309,7 +313,9 @@ class NotificationHelper {
     }
 
     final Duration delay = nextTarget.difference(now);
-    debugPrint('Initial delay calculated: ${delay.inHours}h ${delay.inMinutes.remainder(60)}m');
+    debugPrint(
+      'Initial delay calculated: ${delay.inHours}h ${delay.inMinutes.remainder(60)}m',
+    );
 
     return delay;
   }
