@@ -39,7 +39,14 @@ class NotificationHelper {
     }
 
     try {
+      // Initialize timezone data and set local timezone
       tz.initializeTimeZones();
+
+      // Set timezone to device's local timezone
+      final String timeZoneName = await _getDeviceTimeZone();
+      tz.setLocalLocation(tz.getLocation(timeZoneName));
+
+      debugPrint('Timezone set to: $timeZoneName');
 
       const initializationSettingsAndroid = AndroidInitializationSettings(
         '@mipmap/ic_launcher',
@@ -161,6 +168,54 @@ class NotificationHelper {
     }
   }
 
+  /// Get device timezone name
+  Future<String> _getDeviceTimeZone() async {
+    try {
+      // Try to get system timezone, fallback to UTC if failed
+      final DateTime now = DateTime.now();
+      final String timeZoneOffset = now.timeZoneOffset.toString();
+
+      // Common timezone mappings for Indonesia
+      final Map<String, String> indonesianTimeZones = {
+        '7:00:00.000000': 'Asia/Jakarta',    // WIB (Western Indonesia Time)
+        '8:00:00.000000': 'Asia/Makassar',   // WITA (Central Indonesia Time)
+        '9:00:00.000000': 'Asia/Jayapura',   // WIT (Eastern Indonesia Time)
+      };
+
+      // Check if it's Indonesian timezone
+      if (indonesianTimeZones.containsKey(timeZoneOffset)) {
+        return indonesianTimeZones[timeZoneOffset]!;
+      }
+
+      // For other countries, try common timezones based on offset
+      final int offsetHours = now.timeZoneOffset.inHours;
+      final Map<int, String> commonTimeZones = {
+        -8: 'America/Los_Angeles',  // PST/PDT
+        -7: 'America/Denver',       // MST/MDT
+        -6: 'America/Chicago',      // CST/CDT
+        -5: 'America/New_York',     // EST/EDT
+        0: 'Europe/London',         // GMT/BST
+        1: 'Europe/Paris',          // CET/CEST
+        2: 'Europe/Helsinki',       // EET/EEST
+        3: 'Europe/Moscow',         // MSK
+        5: 'Asia/Karachi',          // PKT
+        7: 'Asia/Jakarta',          // WIB
+        8: 'Asia/Singapore',        // SGT
+        9: 'Asia/Tokyo',            // JST
+      };
+
+      if (commonTimeZones.containsKey(offsetHours)) {
+        return commonTimeZones[offsetHours]!;
+      }
+
+      // Default fallback
+      return 'Asia/Jakarta'; // Default to Jakarta time (WIB) for Indonesian users
+    } catch (e) {
+      debugPrint('Failed to get device timezone, using Asia/Jakarta: $e');
+      return 'Asia/Jakarta';
+    }
+  }
+
   Future<void> scheduleDailyReminder() async {
     try {
       await _scheduleDailyNotification();
@@ -211,13 +266,18 @@ class NotificationHelper {
       now.year,
       now.month,
       now.day,
-      11,
-      0,
+      11, // 11 AM in 24-hour format
+      0,  // 0 minutes
+      0,  // 0 seconds
     );
 
+    // If the scheduled time has already passed today, schedule for tomorrow
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
+
+    debugPrint('Next notification scheduled for: $scheduledDate (Local time)');
+    debugPrint('Current time: $now');
 
     return scheduledDate;
   }
@@ -232,14 +292,26 @@ class NotificationHelper {
   }
 
   Duration _getInitialDelay() {
-    final now = DateTime.now();
-    final targetTime = DateTime(now.year, now.month, now.day, 11, 0);
+    // Use timezone-aware calculation for consistency
+    final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
+    final tz.TZDateTime targetTime = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      11, // 11 AM
+      0,  // 0 minutes
+    );
 
+    tz.TZDateTime nextTarget = targetTime;
     if (now.isAfter(targetTime)) {
-      return targetTime.add(const Duration(days: 1)).difference(now);
-    } else {
-      return targetTime.difference(now);
+      nextTarget = targetTime.add(const Duration(days: 1));
     }
+
+    final Duration delay = nextTarget.difference(now);
+    debugPrint('Initial delay calculated: ${delay.inHours}h ${delay.inMinutes.remainder(60)}m');
+
+    return delay;
   }
 }
 
