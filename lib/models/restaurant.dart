@@ -35,7 +35,12 @@ class Restaurant {
       rating: (json['rating'] ?? 0).toDouble(),
       address: json['address'],
       categories: json['categories'] != null
-          ? List<String>.from(json['categories'].map((cat) => cat['name']))
+          ? List<String>.from(
+              json['categories'].map(
+                (cat) =>
+                    cat is Map<String, dynamic> ? cat['name'] : cat.toString(),
+              ),
+            )
           : null,
       menus: json['menus'] != null ? Menus.fromJson(json['menus']) : null,
       customerReviews: json['customerReviews'] != null

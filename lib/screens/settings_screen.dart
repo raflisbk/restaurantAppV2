@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../utils/notification_helper.dart';
@@ -48,20 +49,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   subtitle: themeProvider.isDarkMode
                       ? 'Tema gelap aktif'
                       : 'Tema terang aktif',
-                  trailing: Switch(
-                    value: themeProvider.isDarkMode,
-                    onChanged: (value) {
-                      themeProvider.toggleTheme();
-                      _showSnackbar(
+                  trailing: AnimatedScale(
+                    scale: 1.0,
+                    duration: const Duration(milliseconds: 150),
+                    child: Switch(
+                      value: themeProvider.isDarkMode,
+                      onChanged: (value) {
+                        HapticFeedback.lightImpact();
+                        themeProvider.toggleTheme();
+                        _showSnackbar(
+                          context,
+                          'Tema berhasil diubah ke ${value ? 'gelap' : 'terang'}',
+                        );
+                      },
+                      activeColor: Theme.of(context).colorScheme.secondary,
+                      activeTrackColor: Theme.of(
                         context,
-                        'Tema berhasil diubah ke ${value ? 'gelap' : 'terang'}',
-                      );
-                    },
-                    activeThumbColor: Theme.of(context).colorScheme.primary,
-                    inactiveThumbColor: Theme.of(context).colorScheme.outline,
-                    inactiveTrackColor: Theme.of(
-                      context,
-                    ).colorScheme.outline.withAlpha(51),
+                      ).colorScheme.secondary.withOpacity(0.3),
+                      inactiveThumbColor: Theme.of(context).colorScheme.outline,
+                      inactiveTrackColor: Theme.of(
+                        context,
+                      ).colorScheme.outline.withOpacity(0.2),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                   ),
                 ),
                 _buildDivider(),
@@ -70,25 +80,55 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: 'Pengingat Harian',
                   subtitle: _notificationHelper.isPlatformSupported
                       ? (themeProvider.isDailyReminderEnabled
-                            ? 'Notifikasi makan siang aktif (11:00 WIB)'
+                            ? 'Notifikasi makan siang aktif (${themeProvider.notificationTime.hour.toString().padLeft(2, '0')}:${themeProvider.notificationTime.minute.toString().padLeft(2, '0')} WIB)'
                             : 'Notifikasi pengingat nonaktif')
                       : 'Tidak tersedia di platform ini (Windows/Web)',
-                  trailing: Switch(
-                    value:
-                        _notificationHelper.isPlatformSupported &&
-                        themeProvider.isDailyReminderEnabled,
-                    onChanged: _notificationHelper.isPlatformSupported
-                        ? (value) async {
-                            await _handleReminderToggle(value, themeProvider);
-                          }
-                        : null,
-                    activeThumbColor: Theme.of(context).colorScheme.primary,
-                    inactiveThumbColor: Theme.of(context).colorScheme.outline,
-                    inactiveTrackColor: Theme.of(
-                      context,
-                    ).colorScheme.outline.withAlpha(51),
+                  trailing: AnimatedScale(
+                    scale: 1.0,
+                    duration: const Duration(milliseconds: 150),
+                    child: Switch(
+                      value:
+                          _notificationHelper.isPlatformSupported &&
+                          themeProvider.isDailyReminderEnabled,
+                      onChanged: _notificationHelper.isPlatformSupported
+                          ? (value) async {
+                              HapticFeedback.lightImpact();
+                              await _handleReminderToggle(value, themeProvider);
+                            }
+                          : null,
+                      activeColor: Theme.of(context).colorScheme.secondary,
+                      activeTrackColor: Theme.of(
+                        context,
+                      ).colorScheme.secondary.withOpacity(0.3),
+                      inactiveThumbColor: Theme.of(context).colorScheme.outline,
+                      inactiveTrackColor: Theme.of(
+                        context,
+                      ).colorScheme.outline.withOpacity(0.2),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                   ),
                 ),
+                if (_notificationHelper.isPlatformSupported &&
+                    themeProvider.isDailyReminderEnabled)
+                  _buildDivider(),
+                if (_notificationHelper.isPlatformSupported &&
+                    themeProvider.isDailyReminderEnabled)
+                  _buildSettingsTile(
+                    icon: Icons.schedule_outlined,
+                    title: 'Waktu Pengingat',
+                    subtitle:
+                        'Atur jam notifikasi harian (${themeProvider.notificationTime.hour.toString().padLeft(2, '0')}:${themeProvider.notificationTime.minute.toString().padLeft(2, '0')} WIB)',
+                    trailing: Icon(
+                      Icons.chevron_right,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      _showTimePicker(context, themeProvider);
+                    },
+                  ),
               ]),
 
               const SizedBox(height: AppTheme.space32),
@@ -107,26 +147,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       context,
                     ).colorScheme.onSurface.withValues(alpha: 0.4),
                   ),
-                  onTap: () => _showAboutDialog(context),
-                ),
-                _buildDivider(),
-                _buildSettingsTile(
-                  icon: Icons.notifications_active_outlined,
-                  title: 'Test Notifikasi',
-                  subtitle: _notificationHelper.isPlatformSupported
-                      ? 'Uji coba notifikasi pengingat'
-                      : 'Tidak tersedia di platform ini',
-                  trailing: Icon(
-                    Icons.chevron_right,
-                    color: Theme.of(context).colorScheme.onSurface.withValues(
-                      alpha: _notificationHelper.isPlatformSupported
-                          ? 0.4
-                          : 0.2,
-                    ),
-                  ),
-                  onTap: _notificationHelper.isPlatformSupported
-                      ? () async => await _handleTestNotification()
-                      : null,
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    _showAboutDialog(context);
+                  },
                 ),
               ]),
 
@@ -159,7 +183,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildSettingsCard(List<Widget> children) {
-    return Container(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(AppTheme.radiusLG),
@@ -167,8 +192,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
           color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
           width: 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.shadow.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: Column(children: children),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppTheme.radiusLG),
+        child: Column(children: children),
+      ),
     );
   }
 
@@ -179,42 +214,78 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Widget? trailing,
     VoidCallback? onTap,
   }) {
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: AppTheme.space20,
-        vertical: AppTheme.space8,
-      ),
-      leading: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.grey[800]
-              : Colors.grey[50],
-          borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppTheme.radiusMD),
+          splashColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          highlightColor: Theme.of(
+            context,
+          ).colorScheme.primary.withOpacity(0.05),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppTheme.space20,
+              vertical: AppTheme.space12,
+            ),
+            child: Row(
+              children: [
+                // Icon container dengan hover effect
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[800]
+                        : Colors.grey[50],
+                    borderRadius: BorderRadius.circular(AppTheme.radiusSM),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.6),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: AppTheme.space16),
+                // Content
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.65),
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (trailing != null) ...[
+                  const SizedBox(width: AppTheme.space12),
+                  trailing!,
+                ],
+              ],
+            ),
+          ),
         ),
-        child: Icon(
-          icon,
-          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-          size: 20,
-        ),
       ),
-      title: Text(
-        title,
-        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-          fontWeight: FontWeight.w600,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-          height: 1.4,
-        ),
-      ),
-      trailing: trailing,
-      onTap: onTap,
     );
   }
 
@@ -231,12 +302,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(AppTheme.space20),
       decoration: BoxDecoration(
-        color: Theme.of(
-          context,
-        ).colorScheme.primaryContainer.withValues(alpha: 0.3),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[850]
+            : Colors.grey[100],
         borderRadius: BorderRadius.circular(AppTheme.radiusLG),
         border: Border.all(
-          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
           width: 1,
         ),
       ),
@@ -247,7 +318,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Icon(
                 Icons.info_outline,
-                color: Theme.of(context).colorScheme.primary,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.6),
                 size: 20,
               ),
               const SizedBox(width: AppTheme.space8),
@@ -255,18 +328,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 'Tentang Pengingat Harian',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: Theme.of(context).colorScheme.onSurface,
                 ),
               ),
             ],
           ),
           const SizedBox(height: AppTheme.space12),
-          Text(
-            'Fitur pengingat harian akan mengirimkan notifikasi setiap hari pada pukul 11:00 WIB untuk mengingatkan Anda makan siang. Notifikasi berisi saran restoran acak dari daftar favorit atau restoran populer.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              height: 1.5,
-            ),
+          Consumer<ThemeProvider>(
+            builder: (context, themeProvider, child) {
+              return Text(
+                'Fitur pengingat harian akan mengirimkan notifikasi setiap hari pada pukul ${themeProvider.notificationTime.hour.toString().padLeft(2, '0')}:${themeProvider.notificationTime.minute.toString().padLeft(2, '0')} WIB untuk mengingatkan Anda makan siang. Notifikasi berisi saran restoran acak dari daftar favorit atau restoran populer.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.7),
+                  height: 1.5,
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -379,51 +458,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _handleTestNotification() async {
-    try {
-      if (!_notificationHelper.isPlatformSupported) {
-        if (mounted) {
-          _showSnackbar(
-            context,
-            'Notifikasi hanya tersedia di Android, iOS, dan Linux',
-          );
-        }
-        return;
-      }
-
-      // Initialize notifications first
-      final initialized = await _notificationHelper.initNotifications();
-      if (!initialized) {
-        if (mounted) {
-          _showSnackbar(context, 'Gagal menginisialisasi notifikasi');
-        }
-        return;
-      }
-
-      // Show test notification
-      final success = await _notificationHelper.showNotification(
-        'Test Notifikasi Restaurant App',
-        '🍽️ Sudah saatnya makan siang! Cek restoran favorit Anda.',
-      );
-
-      if (mounted) {
-        if (success) {
-          _showSnackbar(context, 'Notifikasi test berhasil dikirim');
-        } else {
-          _showSnackbar(
-            context,
-            'Gagal mengirim notifikasi - periksa izin aplikasi',
-          );
-        }
-      }
-    } catch (e) {
-      debugPrint('Gagal mengirim notifikasi test: $e');
-      if (mounted) {
-        _showSnackbar(context, 'Gagal mengirim notifikasi: ${e.toString()}');
-      }
-    }
-  }
-
   void _showSnackbar(BuildContext context, String message) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -446,13 +480,128 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  String _getNotificationSubtitle(bool isEnabled) {
-    if (!_notificationHelper.isPlatformSupported) {
-      return 'Tidak tersedia di platform ini (Windows/Web)';
+  Future<void> _showTimePicker(
+    BuildContext context,
+    ThemeProvider themeProvider,
+  ) async {
+    final TimeOfDay? pickedTime = await showTimePicker(
+      context: context,
+      initialTime: themeProvider.notificationTime,
+      helpText: 'Pilih Waktu Pengingat Harian',
+      cancelText: 'Batal',
+      confirmText: 'Simpan',
+      hourLabelText: 'Jam',
+      minuteLabelText: 'Menit',
+      builder: (context, child) {
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        return Theme(
+          data: Theme.of(context).copyWith(
+            timePickerTheme: TimePickerThemeData(
+              // Background dengan kontras tinggi
+              backgroundColor: isDark
+                  ? Theme.of(context).colorScheme.surface
+                  : Colors.white,
+
+              // Hour/Minute containers dengan readability tinggi
+              hourMinuteColor: isDark
+                  ? Theme.of(
+                      context,
+                    ).colorScheme.primaryContainer.withOpacity(0.8)
+                  : Theme.of(context).colorScheme.primaryContainer,
+              hourMinuteTextColor: isDark
+                  ? Colors.white
+                  : Theme.of(context).colorScheme.onPrimaryContainer,
+
+              // Dial dengan kontras optimal
+              dialBackgroundColor: isDark
+                  ? Theme.of(context).colorScheme.surfaceContainerHigh
+                  : Theme.of(context).colorScheme.surfaceContainerHighest,
+              dialHandColor: Theme.of(context).colorScheme.primary,
+              dialTextColor: isDark
+                  ? Colors.white
+                  : Theme.of(context).colorScheme.onSurface,
+
+              // Numbers pada dial
+              dayPeriodTextColor: isDark
+                  ? Colors.white
+                  : Theme.of(context).colorScheme.onSurface,
+
+              // Entry mode icons
+              entryModeIconColor: Theme.of(context).colorScheme.onSurface,
+
+              // Help text dengan readability tinggi
+              helpTextStyle: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: isDark
+                    ? Colors.white
+                    : Theme.of(context).colorScheme.onSurface,
+                fontWeight: FontWeight.w600,
+              ),
+
+              // Input decoration untuk entry mode
+              inputDecorationTheme: InputDecorationTheme(
+                filled: true,
+                fillColor: isDark
+                    ? Theme.of(context).colorScheme.surfaceContainerHigh
+                    : Theme.of(context).colorScheme.surfaceContainerHighest,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 2,
+                  ),
+                ),
+              ),
+            ),
+            // Dialog theme untuk shadow dan elevation
+            dialogTheme: DialogThemeData(
+              backgroundColor: isDark
+                  ? Theme.of(context).colorScheme.surface
+                  : Colors.white,
+              elevation: 12,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              shadowColor: isDark
+                  ? Colors.black.withOpacity(0.8)
+                  : Colors.black.withOpacity(0.3),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedTime != null && pickedTime != themeProvider.notificationTime) {
+      try {
+        final success = await themeProvider.setNotificationTime(pickedTime);
+
+        if (success && mounted) {
+          // Re-schedule reminder with new time if it's currently enabled
+          if (themeProvider.isDailyReminderEnabled) {
+            await _notificationHelper.cancelDailyReminder();
+            await _notificationHelper.scheduleDailyReminder();
+          }
+
+          _showSnackbar(
+            context,
+            'Waktu pengingat diubah ke ${pickedTime.hour.toString().padLeft(2, '0')}:${pickedTime.minute.toString().padLeft(2, '0')} WIB',
+          );
+        } else if (mounted) {
+          _showSnackbar(context, 'Gagal mengubah waktu pengingat');
+        }
+      } catch (e) {
+        debugPrint('Error setting notification time: $e');
+        if (mounted) {
+          _showSnackbar(context, 'Terjadi kesalahan: ${e.toString()}');
+        }
+      }
     }
-    return isEnabled
-        ? 'Notifikasi makan siang aktif (11:00 WIB)'
-        : 'Notifikasi pengingat nonaktif';
   }
 
   void _showAboutDialog(BuildContext context) {
@@ -464,7 +613,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         width: 64,
         height: 64,
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.grey[800]
+              : Colors.grey[50],
           borderRadius: BorderRadius.circular(AppTheme.radiusMD),
         ),
         child: Icon(
