@@ -4,6 +4,12 @@ import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../utils/notification_helper.dart';
 import '../themes/app_theme.dart';
+import '../debug_notification.dart';
+import '../debug_notification_test.dart';
+import '../test_immediate_notification.dart';
+import '../debug_daily_reminder_test.dart';
+import '../test_daily_reminder_real.dart';
+import '../enhanced_daily_test.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -30,6 +36,115 @@ class _SettingsScreenState extends State<SettingsScreen> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         automaticallyImplyLeading: false,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          showModalBottomSheet(
+            context: context,
+            builder: (context) => Container(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Debug Tools',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 16),
+                  ListTile(
+                    leading: const Icon(Icons.bug_report),
+                    title: const Text('Basic Debug'),
+                    subtitle: const Text('Original notification debug'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const NotificationDebugScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.science),
+                    title: const Text('Comprehensive Test'),
+                    subtitle: const Text('Detailed notification testing'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const NotificationTestScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.access_time),
+                    title: const Text('Immediate Test'),
+                    subtitle: const Text('Test notifications for today'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ImmediateNotificationTestScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.bug_report_outlined),
+                    title: const Text('Daily Reminder Debug'),
+                    subtitle: const Text('Debug daily reminder issues'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const DailyReminderDebugScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.schedule),
+                    title: const Text('Real Daily Test'),
+                    subtitle: const Text('Test real daily reminder scenarios'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RealDailyReminderTestScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.enhanced_encryption),
+                    title: const Text('Enhanced Daily Test'),
+                    subtitle: const Text('Advanced daily reminder testing'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const EnhancedDailyTestScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        child: Icon(
+          Icons.science,
+          color: Theme.of(context).colorScheme.onPrimary,
+        ),
       ),
       body: Consumer<ThemeProvider>(
         builder: (context, themeProvider, child) {

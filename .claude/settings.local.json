@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(flutter analyze:*)",
+      "Bash(flutter build:*)",
+      "Bash(flutter clean:*)",
+      "Bash(flutter pub:*)",
+      "Bash(flutter run:*)",
+      "Bash(./gradlew:*)",
+      "Bash(r)",
+      "Read(//d/Subek/project/Draft/flutter/Belajar Fundamental Aplikasi Flutter/Submission2/**)",
+      "Bash(dir \"D:\\Subek\\project\\Draft\\flutter\\Belajar Fundamental Aplikasi Flutter\\Submission2\\restaurant_app_clean\\android\\app\")",
+      "Bash(dart format:*)",
+      "Bash(flutter test:*)",
+      "Bash(del test_notification.dart)",
+      "Bash(python:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

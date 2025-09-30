@@ -22,10 +22,19 @@ void main() async {
   // Initialize storage factory
   await StorageFactory.initialize();
 
-  // Initialize notifications
-  await NotificationHelper().initNotifications();
+  // Initialize notifications and request permissions
+  final notificationHelper = NotificationHelper();
+  await notificationHelper.initNotifications();
 
-  // Initialize WorkManager for background tasks
+  // Request permissions immediately on app start
+  try {
+    final permissionGranted = await notificationHelper.requestAllPermissions();
+    debugPrint('🔐 Initial permission request result: $permissionGranted');
+  } catch (e) {
+    debugPrint('❌ Failed to request initial permissions: $e');
+  }
+
+  // Initialize WorkManager for background tasks with imported callbackDispatcher
   await Workmanager().initialize(callbackDispatcher, isInDebugMode: false);
 
   runApp(const RestaurantApp());

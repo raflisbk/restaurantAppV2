@@ -125,6 +125,7 @@ class NotificationHelper {
     }
   }
 
+  /// Check current permission status
   Future<Map<String, bool>> checkPermissionStatus() async {
     final Map<String, bool> status = {
       'basic_notification': false,
@@ -185,10 +186,10 @@ class NotificationHelper {
         status['internet_access'] = true;
       }
 
-      debugPrint('Permission status: $status');
+      debugPrint('Izin status: $status');
       return status;
     } catch (e) {
-      debugPrint('Failed to check permission status: $e');
+      debugPrint('Gagal check permission status: $e');
       return status;
     }
   }
@@ -203,12 +204,12 @@ class NotificationHelper {
       // This requires a plugin or platform channel implementation
       // For now, we'll just log the instruction
       debugPrint('Manual action required:');
-      debugPrint(' Go to Settings > Battery > App optimization');
-      debugPrint(' Find "Restaurant App" and set to "Don\'t optimize"');
+      debugPrint('   Go to Settings > Battery > App optimization');
+      debugPrint('   Find "Restaurant App" and set to "Don\'t optimize"');
 
       return true; // Return true as we've provided instructions
     } catch (e) {
-      debugPrint('Failed to request battery optimization exemption: $e');
+      debugPrint('Gagal request battery optimization exemption: $e');
       return false;
     }
   }
@@ -245,7 +246,7 @@ class NotificationHelper {
           }
         } catch (exactAlarmError) {
           debugPrint(
-            ' Exact alarm permission not available on this device: $exactAlarmError',
+            '🔐 Exact alarm permission not available on this device: $exactAlarmError',
           );
         }
 
@@ -253,7 +254,7 @@ class NotificationHelper {
       }
       return true;
     } catch (e) {
-      debugPrint('Failed to request Android permissions: $e');
+      debugPrint('Gagal request Android permissions: $e');
       return false;
     }
   }
@@ -337,7 +338,7 @@ class NotificationHelper {
         debugPrint('ROBUST CHANNELS CREATED');
       }
     } catch (e) {
-      debugPrint('Failed to create notification channels: $e');
+      debugPrint('Gagal create notification channels: $e');
     }
   }
 
@@ -360,11 +361,13 @@ class NotificationHelper {
       if (androidImplementation != null) {
         final activeNotifications = await androidImplementation
             .getActiveNotifications();
-        debugPrint(' Found ${activeNotifications.length} active notifications');
+        debugPrint(
+          '📱 Found ${activeNotifications.length} active notifications',
+        );
         return activeNotifications;
       }
     } catch (e) {
-      debugPrint('Failed to get active notifications: $e');
+      debugPrint('Gagal get active notifications: $e');
     }
     return [];
   }
@@ -378,7 +381,7 @@ class NotificationHelper {
       Timer(const Duration(seconds: 30), () async {
         debugPrint('TIMER FIRED! Showing notification...');
         final success = await showNotification(
-          ' TIMER FALLBACK SUCCESS!',
+          '🔄 TIMER FALLBACK SUCCESS!',
           'Timer-based notification works! Time: ${DateTime.now().toString().substring(11, 19)}',
         );
         debugPrint('Timer notification result: $success');
@@ -402,7 +405,7 @@ class NotificationHelper {
 
     if (!isPlatformSupported) {
       debugPrint(
-        ' Notifications are not supported on this platform (Windows/Web)',
+        '❌ Notifications are not supported on this platform (Windows/Web)',
       );
       return false;
     }
@@ -412,10 +415,10 @@ class NotificationHelper {
         debugPrint('Initializing notifications...');
         final initialized = await initNotifications();
         if (!initialized) {
-          debugPrint('Failed to initialize notifications');
+          debugPrint('Gagal initialize notifications');
           return false;
         }
-        debugPrint('Notifications initialized in showNotification');
+        debugPrint('Notifikasis initialized in showNotifikasi');
       }
 
       const androidPlatformChannelSpecifics = AndroidNotificationDetails(
@@ -460,11 +463,11 @@ class NotificationHelper {
         platformChannelSpecifics,
       );
 
-      debugPrint('Notification shown successfully: $title');
+      debugPrint('Notifikasi shown successfully: $title');
       debugPrint('END SHOW NOTIFICATION');
       return true;
     } catch (e) {
-      debugPrint('Failed to show notification: $e');
+      debugPrint('Gagal show notification: $e');
       debugPrint('END SHOW NOTIFICATION (ERROR)');
       return false;
     }
@@ -513,7 +516,7 @@ class NotificationHelper {
       // Default fallback
       return 'Asia/Jakarta'; // Default to Jakarta time (WIB) for Indonesian users
     } catch (e) {
-      debugPrint('Failed to get device timezone, using Asia/Jakarta: $e');
+      debugPrint('Gagal get device timezone, using Asia/Jakarta: $e');
       return 'Asia/Jakarta';
     }
   }
@@ -521,7 +524,7 @@ class NotificationHelper {
   Future<void> scheduleDailyReminder() async {
     try {
       if (!isPlatformSupported) {
-        debugPrint('Notifications not supported on this platform');
+        debugPrint('Notifikasis not supported on this platform');
         return;
       }
 
@@ -529,7 +532,7 @@ class NotificationHelper {
       if (!_isInitialized) {
         final initialized = await initNotifications();
         if (!initialized) {
-          debugPrint('Failed to initialize notifications for daily reminder');
+          debugPrint('Gagal initialize notifications for daily reminder');
           return;
         }
       }
@@ -559,7 +562,7 @@ class NotificationHelper {
 
             if (recheck != true) {
               debugPrint(
-                ' Exact alarm permission still not granted. Notifications may not work reliably.',
+                '❌ Exact alarm permission still not granted. Notifications may not work reliably.',
               );
             }
           }
@@ -591,15 +594,32 @@ class NotificationHelper {
         0,
       );
 
+      // If the scheduled time has already passed today, schedule for tomorrow
       if (scheduledDate.isBefore(now) ||
           scheduledDate.difference(now).inMinutes < 1) {
         scheduledDate = scheduledDate.add(const Duration(days: 1));
+        debugPrint('Time has passed or too close, scheduling for tomorrow');
+      } else {
+        debugPrint('📅 Time hasn\'t passed today, scheduling for today');
       }
 
-      final notificationContent = await _getNotificationContent();
+      debugPrint('DAILY REMINDER SCHEDULING');
+      debugPrint('Waktu sekarang: $now');
+      debugPrint(
+        'Notification setting: ${notificationTime.hour}:${notificationTime.minute}',
+      );
+      debugPrint('Dijadwalkan time: $scheduledDate');
+      debugPrint('Time until notification: ${scheduledDate.difference(now)}');
 
+      // Get notification content based on favorites
+      final notificationContent = await _getNotificationContent();
+      debugPrint(
+        'Notification content: ${notificationContent['title']} - ${notificationContent['body']}',
+      );
+
+      // Schedule with flutter_local_notifications (primary method)
       await flutterLocalNotificationsPlugin.zonedSchedule(
-        1,
+        1, // notification id (different from WorkManager)
         notificationContent['title']!,
         notificationContent['body']!,
         scheduledDate,
@@ -632,9 +652,13 @@ class NotificationHelper {
             UILocalNotificationDateInterpretation.absoluteTime,
       );
 
+      debugPrint('Primary notification scheduled successfully!');
+
+      // Also schedule with WorkManager as backup (use SAME timing as primary)
       await _scheduleWorkManagerBackup(scheduledDate);
     } catch (e) {
-      debugPrint('Gagal menjadwalkan daily reminder: $e');
+      debugPrint('Gagal schedule daily reminder: $e');
+      debugPrint('Error details: ${e.toString()}');
       rethrow;
     }
   }
@@ -653,13 +677,15 @@ class NotificationHelper {
         }
       }
 
+      // Default to 11:00 if no custom time is set
       return const TimeOfDay(hour: 11, minute: 0);
     } catch (e) {
-      debugPrint('Error mendapatkan waktu notifikasi: $e');
+      debugPrint('Error getting notification time: $e');
       return const TimeOfDay(hour: 11, minute: 0);
     }
   }
 
+  /// Get notification title and body based on favorites
   Future<Map<String, String>> _getNotificationContent() async {
     try {
       final dbHelper = DatabaseHelper();
@@ -667,25 +693,28 @@ class NotificationHelper {
       final favorites = await dbHelper.getFavorites();
 
       if (favorites.isNotEmpty) {
+        // Random restaurant from favorites
         final randomIndex = Random().nextInt(favorites.length);
         final restaurant = favorites[randomIndex];
 
         return {
-          'title': 'Waktunya Makan!',
+          'title': 'Waktunya Makan! 🍽️',
           'body':
               'Bagaimana dengan ${restaurant.name} di ${restaurant.city} hari ini? Restoran favoritmu menunggu!',
         };
       } else {
+        // No favorites yet
         return {
-          'title': 'Waktunya Makan!',
+          'title': 'Waktunya Makan! 🍽️',
           'body':
-              'Jangan lupa makan siang hari ini! Yuk cari restoran favoritmu dan simpan untuk rekomendasi selanjutnya',
+              'Jangan lupa makan siang hari ini! Yuk cari restoran favoritmu dan simpan untuk rekomendasi selanjutnya 😊',
         };
       }
     } catch (e) {
-      debugPrint('Error mendapatkan konten notifikasi: $e');
+      debugPrint('Error getting notification content: $e');
+      // Fallback message
       return {
-        'title': 'Waktunya Makan!',
+        'title': 'Waktunya Makan! 🍽️',
         'body':
             'Jangan lupa makan siang hari ini! Cek aplikasi untuk rekomendasi restoran.',
       };
@@ -711,14 +740,14 @@ class NotificationHelper {
     }
 
     debugPrint('Next notification scheduled for: $scheduledDate (Local time)');
-    debugPrint('Current time: $now');
+    debugPrint('Waktu sekarang: $now');
 
     return scheduledDate;
   }
 
   /// Schedule WorkManager backup with SAME timing as primary notification
   Future<void> _scheduleWorkManagerBackup(tz.TZDateTime scheduledDate) async {
-    debugPrint(' SCHEDULING WORKMANAGER BACKUP (SAME TIME)');
+    debugPrint('SCHEDULING WORKMANAGER BACKUP (SAME TIME)');
     try {
       // Cancel existing task first
       await Workmanager().cancelByUniqueName('daily_reminder');
@@ -736,10 +765,10 @@ class NotificationHelper {
       final delayDuration = targetDateTime.difference(now);
 
       debugPrint('WorkManager backup: Using SAME time as primary');
-      debugPrint('Current time: $now');
+      debugPrint('Waktu sekarang: $now');
       debugPrint('WorkManager trigger: $targetDateTime');
       debugPrint(
-        ' Delay: ${delayDuration.inHours}h ${delayDuration.inMinutes.remainder(60)}m',
+        '📅 Delay: ${delayDuration.inHours}h ${delayDuration.inMinutes.remainder(60)}m',
       );
 
       // Schedule WorkManager task for SAME time as primary
@@ -751,16 +780,16 @@ class NotificationHelper {
       );
 
       debugPrint('WorkManager backup scheduled for SAME time');
-      debugPrint(' END WORKMANAGER BACKUP SCHEDULING');
+      debugPrint('END WORKMANAGER BACKUP SCHEDULING');
     } catch (e) {
-      debugPrint('Failed to schedule WorkManager backup: $e');
-      debugPrint(' END WORKMANAGER BACKUP SCHEDULING (ERROR)');
+      debugPrint('Gagal schedule WorkManager backup: $e');
+      debugPrint('END WORKMANAGER BACKUP SCHEDULING (ERROR)');
     }
   }
 
   /// Schedule next day's notification using WorkManager as backup (LEGACY - keep for callback)
   Future<void> _scheduleNextDayWithWorkManager() async {
-    debugPrint(' SCHEDULING WORKMANAGER BACKUP');
+    debugPrint('SCHEDULING WORKMANAGER BACKUP');
     try {
       final notificationTime = await _getNotificationTime();
 
@@ -780,10 +809,10 @@ class NotificationHelper {
       final delayDuration = tomorrow.difference(now);
 
       debugPrint('WorkManager backup: Scheduling for tomorrow');
-      debugPrint('Current time: $now');
+      debugPrint('Waktu sekarang: $now');
       debugPrint('Next WorkManager trigger: $tomorrow');
       debugPrint(
-        ' Delay: ${delayDuration.inHours}h ${delayDuration.inMinutes.remainder(60)}m',
+        '📅 Delay: ${delayDuration.inHours}h ${delayDuration.inMinutes.remainder(60)}m',
       );
 
       // Schedule WorkManager task for tomorrow's notification
@@ -796,10 +825,10 @@ class NotificationHelper {
       );
 
       debugPrint('WorkManager scheduled for next day');
-      debugPrint(' END WORKMANAGER SCHEDULING');
+      debugPrint('END WORKMANAGER SCHEDULING');
     } catch (e) {
-      debugPrint('Failed to schedule WorkManager task: $e');
-      debugPrint(' END WORKMANAGER SCHEDULING (ERROR)');
+      debugPrint('Gagal schedule WorkManager task: $e');
+      debugPrint('END WORKMANAGER SCHEDULING (ERROR)');
     }
   }
 
@@ -821,7 +850,7 @@ class NotificationHelper {
 
       debugPrint('Daily reminder cancelled successfully');
     } catch (e) {
-      debugPrint('Failed to cancel daily reminder: $e');
+      debugPrint('Gagal cancel daily reminder: $e');
     }
   }
 
@@ -833,7 +862,7 @@ class NotificationHelper {
   Future<bool> scheduleTestNotification() async {
     try {
       if (!isPlatformSupported) {
-        debugPrint('Notifications not supported on this platform');
+        debugPrint('Notifikasis not supported on this platform');
         return false;
       }
 
@@ -841,7 +870,7 @@ class NotificationHelper {
       if (!_isInitialized) {
         final initialized = await initNotifications();
         if (!initialized) {
-          debugPrint('Failed to initialize notifications for test');
+          debugPrint('Gagal initialize notifications for test');
           return false;
         }
       }
@@ -854,14 +883,14 @@ class NotificationHelper {
       final tz.TZDateTime scheduledTime = now.add(const Duration(minutes: 2));
 
       debugPrint('ZONED SCHEDULE TEST NOTIFICATION');
-      debugPrint('Current time: $now');
-      debugPrint('Scheduled time: $scheduledTime');
+      debugPrint('Waktu sekarang: $now');
+      debugPrint('Dijadwalkan time: $scheduledTime');
       debugPrint('Will fire in: 120 seconds');
 
       // Use zonedSchedule for proper testing
       await flutterLocalNotificationsPlugin.zonedSchedule(
         999, // test notification id
-        ' ZonedSchedule Test BERHASIL!',
+        '🎯 ZonedSchedule Test BERHASIL!',
         'Test notifikasi 2 menit menggunakan zonedSchedule. Sistem bekerja dengan sempurna!',
         scheduledTime,
         const NotificationDetails(
@@ -892,12 +921,12 @@ class NotificationHelper {
       );
 
       debugPrint('ZonedSchedule test notification scheduled successfully!');
-      debugPrint('Notification will appear at: $scheduledTime');
+      debugPrint('Notifikasi will appear at: $scheduledTime');
       debugPrint('END ZONED SCHEDULE SETUP');
 
       return true;
     } catch (e) {
-      debugPrint('Failed to schedule test notification: $e');
+      debugPrint('Gagal schedule test notification: $e');
       return false;
     }
   }
@@ -906,7 +935,7 @@ class NotificationHelper {
   Future<bool> showTestNotification() async {
     try {
       if (!isPlatformSupported) {
-        debugPrint('Notifications not supported on this platform');
+        debugPrint('Notifikasis not supported on this platform');
         return false;
       }
 
@@ -914,7 +943,7 @@ class NotificationHelper {
       if (!_isInitialized) {
         final initialized = await initNotifications();
         if (!initialized) {
-          debugPrint('Failed to initialize notifications for test');
+          debugPrint('Gagal initialize notifications for test');
           return false;
         }
       }
@@ -927,7 +956,7 @@ class NotificationHelper {
       debugPrint('Time: $timeString');
 
       final success = await showNotification(
-        'Test Notifikasi Segera ',
+        'Test Notifikasi Segera 🧪',
         'BERHASIL! Test notifikasi langsung berhasil pada waktu: $timeString',
       );
 
@@ -935,7 +964,7 @@ class NotificationHelper {
       debugPrint('END IMMEDIATE TEST');
       return success;
     } catch (e) {
-      debugPrint('Failed to show immediate test notification: $e');
+      debugPrint('Gagal show immediate test notification: $e');
       return false;
     }
   }
@@ -951,7 +980,7 @@ class NotificationHelper {
       await flutterLocalNotificationsPlugin.cancel(999);
       debugPrint('Test notifications and timers cancelled');
     } catch (e) {
-      debugPrint('Failed to cancel test notifications: $e');
+      debugPrint('Gagal cancel test notifications: $e');
     }
   }
 
@@ -961,14 +990,14 @@ class NotificationHelper {
       final pendingNotifications = await flutterLocalNotificationsPlugin
           .pendingNotificationRequests();
       debugPrint(
-        ' Pending notifications count: ${pendingNotifications.length}',
+        '📋 Pending notifications count: ${pendingNotifications.length}',
       );
       for (final notification in pendingNotifications) {
-        debugPrint(' - ID: ${notification.id}, Title: ${notification.title}');
+        debugPrint('  - ID: ${notification.id}, Title: ${notification.title}');
       }
       return pendingNotifications;
     } catch (e) {
-      debugPrint('Failed to get pending notifications: $e');
+      debugPrint('Gagal get pending notifications: $e');
       return [];
     }
   }
@@ -977,7 +1006,7 @@ class NotificationHelper {
   Future<bool> scheduleLiveTest2Minutes() async {
     try {
       if (!isPlatformSupported) {
-        debugPrint('Notifications not supported on this platform');
+        debugPrint('Notifikasis not supported on this platform');
         return false;
       }
 
@@ -985,7 +1014,7 @@ class NotificationHelper {
       if (!_isInitialized) {
         final initialized = await initNotifications();
         if (!initialized) {
-          debugPrint('Failed to initialize notifications for live test');
+          debugPrint('Gagal initialize notifications for live test');
           return false;
         }
       }
@@ -1019,10 +1048,10 @@ class NotificationHelper {
 
             if (recheckResult != true) {
               debugPrint(
-                ' CRITICAL: No exact alarm permission - test will fail!',
+                '❌ CRITICAL: No exact alarm permission - test will fail!',
               );
               debugPrint(
-                ' User needs to manually grant in Settings > Apps > Restaurant App > Alarms & reminders',
+                '❌ User needs to manually grant in Settings > Apps > Restaurant App > Alarms & reminders',
               );
               return false;
             }
@@ -1041,10 +1070,10 @@ class NotificationHelper {
       debugPrint('Current system time: ${systemNow.toString()}');
       debugPrint('Target notification time: ${targetTime.toString()}');
       debugPrint(
-        ' Current: ${systemNow.hour.toString().padLeft(2, '0')}:${systemNow.minute.toString().padLeft(2, '0')}:${systemNow.second.toString().padLeft(2, '0')}',
+        '🕐 Current: ${systemNow.hour.toString().padLeft(2, '0')}:${systemNow.minute.toString().padLeft(2, '0')}:${systemNow.second.toString().padLeft(2, '0')}',
       );
       debugPrint(
-        ' Target: ${targetTime.hour.toString().padLeft(2, '0')}:${targetTime.minute.toString().padLeft(2, '0')}:${targetTime.second.toString().padLeft(2, '0')}',
+        '🕐 Target:  ${targetTime.hour.toString().padLeft(2, '0')}:${targetTime.minute.toString().padLeft(2, '0')}:${targetTime.second.toString().padLeft(2, '0')}',
       );
       debugPrint('Delay: 2 minutes exactly');
 
@@ -1058,7 +1087,7 @@ class NotificationHelper {
       debugPrint('TIMEZONE DEBUG');
       debugPrint('System DateTime: $systemNow');
       debugPrint('TZ DateTime: $tzNow');
-      debugPrint('Scheduled TZ: $scheduledTime');
+      debugPrint('Dijadwalkan TZ: $scheduledTime');
       debugPrint('Local timezone: ${tz.local}');
       debugPrint('System offset: ${systemNow.timeZoneOffset}');
 
@@ -1067,7 +1096,7 @@ class NotificationHelper {
 
       await flutterLocalNotificationsPlugin.zonedSchedule(
         555, // live test notification id
-        ' LIVE TEST BERHASIL!',
+        '🔥 LIVE TEST BERHASIL!',
         'Notifikasi +2 menit dari ${systemNow.hour.toString().padLeft(2, '0')}:${systemNow.minute.toString().padLeft(2, '0')} → ${targetTime.hour.toString().padLeft(2, '0')}:${targetTime.minute.toString().padLeft(2, '0')}',
         scheduledTime,
         const NotificationDetails(
@@ -1099,23 +1128,23 @@ class NotificationHelper {
       );
 
       debugPrint('LIVE TEST SCHEDULED');
-      debugPrint('Notification ID: 555');
+      debugPrint('Notifikasi ID: 555');
       debugPrint(
-        ' Scheduled for: ${targetTime.hour.toString().padLeft(2, '0')}:${targetTime.minute.toString().padLeft(2, '0')}:${targetTime.second.toString().padLeft(2, '0')}',
+        '✅ Scheduled for: ${targetTime.hour.toString().padLeft(2, '0')}:${targetTime.minute.toString().padLeft(2, '0')}:${targetTime.second.toString().padLeft(2, '0')}',
       );
       debugPrint(
-        ' Current time: ${systemNow.hour.toString().padLeft(2, '0')}:${systemNow.minute.toString().padLeft(2, '0')}:${systemNow.second.toString().padLeft(2, '0')}',
+        '✅ Current time:  ${systemNow.hour.toString().padLeft(2, '0')}:${systemNow.minute.toString().padLeft(2, '0')}:${systemNow.second.toString().padLeft(2, '0')}',
       );
       debugPrint('WAIT EXACTLY 2 MINUTES FOR NOTIFICATION!');
       debugPrint(
-        ' Close app and wait - notification should appear even when app closed',
+        '✅ Close app and wait - notification should appear even when app closed',
       );
 
       // Check pending notifications
       final pendingNotifications = await flutterLocalNotificationsPlugin
           .pendingNotificationRequests();
       debugPrint(
-        ' Pending notifications after schedule: ${pendingNotifications.length}',
+        '📋 Pending notifications after schedule: ${pendingNotifications.length}',
       );
       for (final notif in pendingNotifications) {
         debugPrint('- ID: ${notif.id}, Title: ${notif.title}');
@@ -1133,7 +1162,7 @@ class NotificationHelper {
   Future<bool> scheduleTimerBasedTest() async {
     try {
       if (!isPlatformSupported) {
-        debugPrint('Notifications not supported on this platform');
+        debugPrint('Notifikasis not supported on this platform');
         return false;
       }
 
@@ -1141,7 +1170,7 @@ class NotificationHelper {
       if (!_isInitialized) {
         final initialized = await initNotifications();
         if (!initialized) {
-          debugPrint('Failed to initialize notifications for timer test');
+          debugPrint('Gagal initialize notifications for timer test');
           return false;
         }
       }
@@ -1153,7 +1182,7 @@ class NotificationHelper {
       final DateTime targetTime = now.add(const Duration(seconds: 30));
 
       debugPrint('TIMER-BASED TEST (30 seconds)');
-      debugPrint('Current time: ${now.toString()}');
+      debugPrint('Waktu sekarang: ${now.toString()}');
       debugPrint('Target time: ${targetTime.toString()}');
       debugPrint('Will use Timer.periodic for 30 seconds');
 
@@ -1163,7 +1192,7 @@ class NotificationHelper {
         debugPrint('TIMER FIRED! Time: ${fireTime.toString()}');
 
         final success = await showNotification(
-          ' TIMER Test BERHASIL!',
+          '⏰ TIMER Test BERHASIL!',
           'Test menggunakan Timer (seperti immediate) berhasil pada ${fireTime.hour.toString().padLeft(2, '0')}:${fireTime.minute.toString().padLeft(2, '0')}',
         );
 
@@ -1184,7 +1213,7 @@ class NotificationHelper {
   Future<bool> testImmediateNotification() async {
     try {
       if (!isPlatformSupported) {
-        debugPrint('Notifications not supported on this platform');
+        debugPrint('Notifikasis not supported on this platform');
         return false;
       }
 
@@ -1192,7 +1221,7 @@ class NotificationHelper {
       if (!_isInitialized) {
         final initialized = await initNotifications();
         if (!initialized) {
-          debugPrint('Failed to initialize notifications for immediate test');
+          debugPrint('Gagal initialize notifications for immediate test');
           return false;
         }
       }
@@ -1205,7 +1234,7 @@ class NotificationHelper {
       debugPrint('Testing immediate notification at: $timeString');
 
       final success = await showNotification(
-        ' IMMEDIATE Test BERHASIL!',
+        '⚡ IMMEDIATE Test BERHASIL!',
         'Sistem notifikasi dasar bekerja! Waktu: $timeString',
       );
 
@@ -1264,7 +1293,7 @@ class NotificationHelper {
 
       debugPrint('END DEBUG INFO');
     } catch (e) {
-      debugPrint('Failed to get debug info: $e');
+      debugPrint('Gagal get debug info: $e');
     }
   }
 
@@ -1272,7 +1301,7 @@ class NotificationHelper {
   Future<bool> scheduleSimpleTest() async {
     try {
       if (!isPlatformSupported) {
-        debugPrint('Notifications not supported on this platform');
+        debugPrint('Notifikasis not supported on this platform');
         return false;
       }
 
@@ -1280,7 +1309,7 @@ class NotificationHelper {
       if (!_isInitialized) {
         final initialized = await initNotifications();
         if (!initialized) {
-          debugPrint('Failed to initialize notifications for simple test');
+          debugPrint('Gagal initialize notifications for simple test');
           return false;
         }
       }
@@ -1296,7 +1325,7 @@ class NotificationHelper {
           final bool? exactAlarmGranted = await androidImplementation
               .canScheduleExactNotifications();
           debugPrint(
-            ' Simple test - Exact alarm permission: $exactAlarmGranted',
+            '🔐 Simple test - Exact alarm permission: $exactAlarmGranted',
           );
 
           if (exactAlarmGranted != true) {
@@ -1307,12 +1336,12 @@ class NotificationHelper {
             final recheckResult = await androidImplementation
                 .canScheduleExactNotifications();
             debugPrint(
-              ' After request - exact alarm permission: $recheckResult',
+              '🔐 After request - exact alarm permission: $recheckResult',
             );
 
             if (recheckResult != true) {
               debugPrint(
-                ' Still no exact alarm permission - scheduling may fail',
+                '❌ Still no exact alarm permission - scheduling may fail',
               );
             }
           }
@@ -1346,7 +1375,7 @@ class NotificationHelper {
 
       await flutterLocalNotificationsPlugin.zonedSchedule(
         997, // test notification id
-        ' FIXED Test 30 Detik!',
+        '🚀 FIXED Test 30 Detik!',
         'Test dengan timezone fix berhasil pada ${saferScheduledTime.hour}:${saferScheduledTime.minute}:${saferScheduledTime.second}',
         saferScheduledTime,
         const NotificationDetails(
@@ -1392,7 +1421,7 @@ class NotificationHelper {
   Future<bool> scheduleQuickTestNotification() async {
     try {
       if (!isPlatformSupported) {
-        debugPrint('Notifications not supported on this platform');
+        debugPrint('Notifikasis not supported on this platform');
         return false;
       }
 
@@ -1400,7 +1429,7 @@ class NotificationHelper {
       if (!_isInitialized) {
         final initialized = await initNotifications();
         if (!initialized) {
-          debugPrint('Failed to initialize notifications for quick test');
+          debugPrint('Gagal initialize notifications for quick test');
           return false;
         }
       }
@@ -1416,17 +1445,17 @@ class NotificationHelper {
           final bool? exactAlarmGranted = await androidImplementation
               .canScheduleExactNotifications();
           debugPrint(
-            ' Quick test - Exact alarm permission granted: $exactAlarmGranted',
+            '🔐 Quick test - Exact alarm permission granted: $exactAlarmGranted',
           );
 
           if (exactAlarmGranted == false) {
             debugPrint(
-              ' Quick test - Exact alarm permission not granted, requesting...',
+              '⚠️ Quick test - Exact alarm permission not granted, requesting...',
             );
             final result = await androidImplementation
                 .requestExactAlarmsPermission();
             debugPrint(
-              ' Quick test - Exact alarm permission request result: $result',
+              '🔐 Quick test - Exact alarm permission request result: $result',
             );
           }
         }
@@ -1440,14 +1469,14 @@ class NotificationHelper {
       final tz.TZDateTime scheduledTime = now.add(const Duration(minutes: 1));
 
       debugPrint('QUICK TEST NOTIFICATION (1 MINUTE)');
-      debugPrint('Current time: $now');
-      debugPrint('Scheduled time: $scheduledTime');
+      debugPrint('Waktu sekarang: $now');
+      debugPrint('Dijadwalkan time: $scheduledTime');
       debugPrint('Will fire in: 60 seconds');
 
       // Schedule notification using the same method as daily reminder
       await flutterLocalNotificationsPlugin.zonedSchedule(
         998, // test notification id
-        ' Test Notifikasi 1 Menit BERHASIL!',
+        '⏰ Test Notifikasi 1 Menit BERHASIL!',
         'Notifikasi menggunakan zonedSchedule dengan exact alarm. Sistem bekerja sempurna pada ${scheduledTime.hour.toString().padLeft(2, '0')}:${scheduledTime.minute.toString().padLeft(2, '0')}',
         scheduledTime,
         const NotificationDetails(
@@ -1480,12 +1509,12 @@ class NotificationHelper {
       );
 
       debugPrint('Quick test notification scheduled successfully!');
-      debugPrint('Notification will appear at: $scheduledTime');
+      debugPrint('Notifikasi will appear at: $scheduledTime');
       debugPrint('END QUICK TEST SETUP');
 
       return true;
     } catch (e) {
-      debugPrint('Failed to schedule quick test notification: $e');
+      debugPrint('Gagal schedule quick test notification: $e');
       return false;
     }
   }
@@ -1496,71 +1525,105 @@ class NotificationHelper {
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     try {
+      debugPrint('WorkManager CALLBACK STARTED');
+      debugPrint('Task: $task');
+      debugPrint('Input Data: $inputData');
+      debugPrint('Time: ${DateTime.now()}');
+
       if (task == 'dailyReminderTask') {
         try {
+          debugPrint('Processing dailyReminderTask');
+
+          // Initialize timezone first to prevent timezone errors
+          debugPrint('Initializing timezones...');
           tz.initializeTimeZones();
+          debugPrint('Timezones initialized');
+
+          // Initialize notifications (skip permission request in background)
+          debugPrint('Initializing notifications...');
           final notificationHelper = NotificationHelper();
 
+          // Force initialization without permission check in background
           if (!NotificationHelper._isInitialized) {
             try {
+              // Initialize timezone and basic setup
               tz.initializeTimeZones();
               final String timeZoneName = await notificationHelper
                   ._getDeviceTimeZone();
               tz.setLocalLocation(tz.getLocation(timeZoneName));
 
+              // Create notification channels without permission request
               await notificationHelper._createNotificationChannels();
               NotificationHelper._isInitialized = true;
+              debugPrint(
+                '✅ Background notifications initialized (skipped permissions)',
+              );
             } catch (e) {
-              debugPrint('Gagal inisialisasi notifikasi background: $e');
+              debugPrint('Gagal initialize background notifications: $e');
               return Future.value(false);
             }
+          } else {
+            debugPrint('Notifikasis already initialized');
           }
 
+          // Show the notification based on favorites
           bool notificationSuccess = false;
 
           try {
+            // Get favorites from database
             final dbHelper = DatabaseHelper();
             await dbHelper.initialize();
             final favorites = await dbHelper.getFavorites();
 
-            String title = 'Waktunya Makan!';
+            String title = 'Waktunya Makan! 🍽️';
             String body;
 
             if (favorites.isNotEmpty) {
+              // Random restaurant from favorites
               final randomIndex = Random().nextInt(favorites.length);
               final restaurant = favorites[randomIndex];
 
               body =
                   'Bagaimana dengan ${restaurant.name} di ${restaurant.city} hari ini? Restoran favoritmu menunggu!';
+              debugPrint('Using favorite restaurant: ${restaurant.name}');
             } else {
+              // No favorites yet
               body =
-                  'Jangan lupa makan siang hari ini! Yuk cari restoran favoritmu dan simpan untuk rekomendasi selanjutnya';
+                  'Jangan lupa makan siang hari ini! Yuk cari restoran favoritmu dan simpan untuk rekomendasi selanjutnya 😊';
+              debugPrint('No favorites, using invitation message');
             }
 
             notificationSuccess = await notificationHelper.showNotification(
               title,
               body,
             );
-          } catch (e) {
-            debugPrint('Error mendapatkan favorites di background: $e');
 
+            debugPrint('WorkManager notification shown: $notificationSuccess');
+          } catch (e) {
+            debugPrint('Error getting favorites in background: $e');
+
+            // Fallback notification if error
             notificationSuccess = await notificationHelper.showNotification(
-              'Waktunya Makan!',
+              'Waktunya Makan! 🍽️',
               'Jangan lupa makan siang hari ini! Cek aplikasi untuk rekomendasi restoran.',
             );
+            debugPrint('Fallback notification shown: $notificationSuccess');
           }
 
+          // Schedule next day's notification (auto-renewal from callback)
           await notificationHelper._scheduleNextDayWithWorkManager();
 
           return Future.value(notificationSuccess);
         } catch (e) {
-          debugPrint('Error pada background task: $e');
+          debugPrint('Error in background task: $e');
 
+          // Last resort notification
           try {
             final notificationHelper = NotificationHelper();
             await notificationHelper.initNotifications();
 
-            String title = 'Waktunya Makan!';
+            // Try to get content based on favorites
+            String title = 'Waktunya Makan! 🍽️';
             String body = 'Jangan lupa makan siang hari ini!';
 
             try {
@@ -1575,30 +1638,33 @@ void callbackDispatcher() {
                     'Bagaimana dengan ${restaurant.name} di ${restaurant.city} hari ini? Restoran favoritmu menunggu!';
               } else {
                 body =
-                    'Jangan lupa makan siang hari ini! Yuk cari restoran favoritmu dan simpan untuk rekomendasi selanjutnya';
+                    'Jangan lupa makan siang hari ini! Yuk cari restoran favoritmu dan simpan untuk rekomendasi selanjutnya 😊';
               }
             } catch (dbError) {
-              debugPrint('Gagal mendapatkan favorites: $dbError');
+              debugPrint('Gagal get favorites in last resort: $dbError');
             }
 
             final success = await notificationHelper.showNotification(
               title,
               body,
             );
+            debugPrint('Last resort notification shown: $success');
 
+            // Still try to schedule next day (auto-renewal)
             await notificationHelper._scheduleNextDayWithWorkManager();
 
             return Future.value(success);
           } catch (notifError) {
-            debugPrint('Gagal menampilkan notifikasi fallback: $notifError');
+            debugPrint('Gagal show last resort notification: $notifError');
             return Future.value(false);
           }
         }
       }
 
+      debugPrint('WorkManager task completed: $task');
       return Future.value(true);
     } catch (e) {
-      debugPrint('Critical error pada WorkManager callback: $e');
+      debugPrint('Critical error in WorkManager callback: $e');
       return Future.value(false);
     }
   });
